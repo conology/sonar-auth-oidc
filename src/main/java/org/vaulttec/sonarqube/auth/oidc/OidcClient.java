@@ -239,6 +239,7 @@ public class OidcClient {
     }
   }
 
+
   private Scope getScope() {
     return Scope.parse(config.scopes());
   }
