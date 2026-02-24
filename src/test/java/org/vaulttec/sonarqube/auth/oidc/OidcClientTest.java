@@ -20,6 +20,7 @@ package org.vaulttec.sonarqube.auth.oidc;
 import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -67,6 +68,21 @@ public class OidcClientTest extends AbstractOidcTest {
     assertEquals("invalid redirect uri", new URI(CALLBACK_URL), request.getRedirectionURI());
     assertEquals("invalid endpoint uri", new URI(ISSUER_URI).resolve("/protocol/openid-connect/auth"),
         request.getEndpointURI());
+  }
+
+  @Test
+  public void createAuthenticationRequest_with_custom_connector() {
+    setSettings(true);
+    settings.put(OidcConfiguration.AUTH_ENDPOINT, "https://auth.de/auth?connector_id=microsoft");
+
+    OidcClient client = createSpyOidcClient();
+
+    AuthenticationRequest request = client.createAuthenticationRequest(CALLBACK_URL, STATE);
+
+    String finalUri = request.toURI().toString();
+    assertTrue(finalUri.contains("connector_id=microsoft"));
+    assertTrue(finalUri.contains("client_id=id"));
+    assertFalse(finalUri.contains("??"));
   }
 
   @Test
