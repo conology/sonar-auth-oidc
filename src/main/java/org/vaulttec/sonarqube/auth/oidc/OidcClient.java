@@ -66,22 +66,23 @@ public class OidcClient {
     LOGGER.debug("Creating authentication request");
     OIDCProviderMetadata providerMetadata = getProviderMetadata();
     try {
-      // Basis-URL vom Provider nehmen
+      AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
+          RESPONSE_TYPE, getScope(), getClientId(), new URI(callbackUrl));
+
+      String customEndpoint = config.authorizationEndpoint().orElse("");
       URI endpointUri = providerMetadata.getAuthorizationEndpointURI();
 
-      Builder builder = new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(),
-          new URI(callbackUrl));
+      if (customEndpoint.contains("connector_id=")) {
+        String connectorId = customEndpoint.split("connector_id=")[1].split("&")[0];
 
-      if (endpointUri.getQuery() != null) {
-        String[] pairs = endpointUri.getQuery().split("&");
-        for (String pair : pairs) {
-          int idx = pair.indexOf("=");
-          String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
-          String value = idx > 0 ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8) : "";
-          builder.customParameter(key, value);
+        builder.customParameter("connector_id", connectorId);
+
+        if (customEndpoint.contains("?")) {
+          String baseUrl = customEndpoint.split("\\?")[0];
+          endpointUri = new URI(baseUrl);
+        } else {
+          endpointUri = new URI(customEndpoint);
         }
-        endpointUri = new URI(endpointUri.getScheme(), endpointUri.getAuthority(),
-            endpointUri.getPath(), null, endpointUri.getFragment());
       }
 
       return builder.endpointURI(endpointUri)
