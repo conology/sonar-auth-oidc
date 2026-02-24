@@ -214,7 +214,21 @@ public class OidcClient {
   protected OIDCProviderMetadata getProviderMetadata() {
     LOGGER.debug("Retrieving provider metadata from {}", config.issuerUri());
     try {
-      return OIDCProviderMetadata.resolve(new Issuer(config.issuerUri()));
+      // Load Metadata via Discovery
+      OIDCProviderMetadata metadata = OIDCProviderMetadata.resolve(new Issuer(config.issuerUri()));
+
+      // Override Authorization Endpoint if configured
+      config.authorizationEndpoint().ifPresent(customEndpoint -> {
+        if (!customEndpoint.trim().isEmpty()) {
+          try {
+            LOGGER.info("Overriding OIDC authorization endpoint: {}", customEndpoint);
+            metadata.setAuthorizationEndpointURI(new URI(customEndpoint));
+          } catch (URISyntaxException e) {
+            throw new IllegalStateException("The custom OIDC authorization endpoint URI is invalid: " + customEndpoint, e);
+          }
+        }
+      });
+      return metadata;
     } catch (IOException | GeneralException e) {
       if (e instanceof GeneralException && e.getMessage().contains("issuer doesn't match")) {
         throw new IllegalStateException("Retrieving OpenID Connect provider metadata failed: " +
