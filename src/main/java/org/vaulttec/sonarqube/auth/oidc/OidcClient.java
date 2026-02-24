@@ -44,6 +44,7 @@ import org.sonar.api.server.http.HttpRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,18 +63,33 @@ public class OidcClient {
   }
 
   public AuthenticationRequest createAuthenticationRequest(String callbackUrl, String state) {
-    AuthenticationRequest request;
     LOGGER.debug("Creating authentication request");
     OIDCProviderMetadata providerMetadata = getProviderMetadata();
     try {
+      // Basis-URL vom Provider nehmen
+      URI endpointUri = providerMetadata.getAuthorizationEndpointURI();
+
       Builder builder = new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(),
           new URI(callbackUrl));
-      request = builder.endpointURI(providerMetadata.getAuthorizationEndpointURI()).state(State.parse(state)).build();
+
+      if (endpointUri.getQuery() != null) {
+        String[] pairs = endpointUri.getQuery().split("&");
+        for (String pair : pairs) {
+          int idx = pair.indexOf("=");
+          String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
+          String value = idx > 0 ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8) : "";
+          builder.customParameter(key, value);
+        }
+        endpointUri = new URI(endpointUri.getScheme(), endpointUri.getAuthority(),
+            endpointUri.getPath(), null, endpointUri.getFragment());
+      }
+
+      return builder.endpointURI(endpointUri)
+          .state(State.parse(state))
+          .build();
     } catch (URISyntaxException e) {
       throw new IllegalStateException("Creating new authentication request failed", e);
     }
-    LOGGER.debug("Authentication request URI: {}", request.toURI());
-    return request;
   }
 
   public AuthorizationCode getAuthorizationCode(HttpRequest callbackRequest) {
