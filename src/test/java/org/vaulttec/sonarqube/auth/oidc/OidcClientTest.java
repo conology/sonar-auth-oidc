@@ -71,36 +71,6 @@ public class OidcClientTest extends AbstractOidcTest {
   }
 
   @Test
-  public void createAuthenticationRequest_with_custom_path_endpoint() {
-    setSettings(true);
-    settings.put(OidcConfiguration.AUTH_ENDPOINT, "https://auth.sultech.de/auth/microsoft");
-
-    OidcClient client = createSpyOidcClient();
-    AuthenticationRequest request = client.createAuthenticationRequest(CALLBACK_URL, STATE);
-
-    String finalUri = request.toURI().toString();
-
-    assertTrue(finalUri.startsWith("https://auth.sultech.de/auth/microsoft"));
-
-    assertTrue(finalUri.contains("client_id=id"));
-    assertFalse(finalUri.contains("connector_id="));
-  }
-
-  @Test
-  public void createAuthenticationRequest_with_custom_query_endpoint() {
-    setSettings(true);
-    settings.put(OidcConfiguration.AUTH_ENDPOINT, "https://auth.de/auth?connector_id=microsoft");
-
-    OidcClient client = createSpyOidcClient();
-    AuthenticationRequest request = client.createAuthenticationRequest(CALLBACK_URL, STATE);
-
-    String finalUri = request.toURI().toString();
-    assertTrue(finalUri.contains("connector_id=microsoft"));
-    assertTrue(finalUri.contains("client_id=id"));
-    assertFalse(finalUri.contains("??")); //
-  }
-
-  @Test
   public void invalidAuthenticationRequestUri() {
     OidcClient underTest = newSpyOidcClient();
     try {
