@@ -20,6 +20,7 @@ package org.vaulttec.sonarqube.auth.oidc;
 import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;

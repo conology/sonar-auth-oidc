@@ -44,6 +44,7 @@ import org.sonar.api.server.http.HttpRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,18 +63,18 @@ public class OidcClient {
   }
 
   public AuthenticationRequest createAuthenticationRequest(String callbackUrl, String state) {
-    AuthenticationRequest request;
     LOGGER.debug("Creating authentication request");
     OIDCProviderMetadata providerMetadata = getProviderMetadata();
     try {
-      Builder builder = new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(),
-          new URI(callbackUrl));
-      request = builder.endpointURI(providerMetadata.getAuthorizationEndpointURI()).state(State.parse(state)).build();
+      URI endpointUri = providerMetadata.getAuthorizationEndpointURI();
+
+      return new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(), new URI(callbackUrl))
+          .endpointURI(endpointUri)
+          .state(State.parse(state))
+          .build();
     } catch (URISyntaxException e) {
       throw new IllegalStateException("Creating new authentication request failed", e);
     }
-    LOGGER.debug("Authentication request URI: {}", request.toURI());
-    return request;
   }
 
   public AuthorizationCode getAuthorizationCode(HttpRequest callbackRequest) {
