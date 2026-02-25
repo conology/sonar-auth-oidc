@@ -66,27 +66,10 @@ public class OidcClient {
     LOGGER.debug("Creating authentication request");
     OIDCProviderMetadata providerMetadata = getProviderMetadata();
     try {
-      Builder builder = new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(),
-          new URI(callbackUrl));
-
-      String customEndpoint = config.authorizationEndpoint().orElse("");
       URI endpointUri = providerMetadata.getAuthorizationEndpointURI();
 
-      if (!customEndpoint.trim().isEmpty() && customEndpoint.contains("connector_id=")) {
-        LOGGER.debug("Custom connector_id detected in endpoint: {}", customEndpoint);
-
-        String[] parts = customEndpoint.split("connector_id=");
-        if (parts.length > 1) {
-          String connectorId = parts[1].split("&")[0];
-
-          builder.customParameter("connector_id", connectorId);
-
-          String baseUrl = customEndpoint.contains("?") ? customEndpoint.split("\\?")[0] : customEndpoint;
-          endpointUri = new URI(baseUrl);
-        }
-      }
-
-      return builder.endpointURI(endpointUri)
+      return new AuthenticationRequest.Builder(RESPONSE_TYPE, getScope(), getClientId(), new URI(callbackUrl))
+          .endpointURI(endpointUri)
           .state(State.parse(state))
           .build();
     } catch (URISyntaxException e) {
